@@ -1,4 +1,4 @@
-# Dynamic Array In Huff
+# Dynamic Arrays In Huff
 
 This repo shows how to use dynamic arrays in Huff.
 
