@@ -1,0 +1,111 @@
+#define function push() nonpayable returns()
+#define function popLast() nonpayable returns() // Can't be called pop since it would shaddow the opcode
+#define function show(uint256) view returns(bytes32)
+#define function length() view returns(uint256)
+
+
+#define constant ARRAY = FREE_STORAGE_POINTER()
+
+
+#define macro SHOW() = takes(0) returns(0) {
+    0x04 calldataload           // [index]
+    [ARRAY]                     // [ARRAY_PTR, index]
+    0x00 mstore                 // [index]
+    0x20 0x00                   // [memOffset, size, index]
+    sha3                        // [hash, index]
+
+    [ARRAY] sload               // [Arr_size, hash, index]
+    dup3                        // [index, Arr_size, hash, index]
+    gt                          // [index > Arr_size, hash, index]
+    outOfBounds
+    jumpi                       // [hash, index]
+
+    add                         // [hash + index]
+    sload                       // [Result]
+    0x20 mstore                 // []
+    0x20 0x20                   // [memOffset, size]
+    return                      // []
+
+    outOfBounds:
+        0x00 0x00 
+        revert
+}
+
+
+#define macro POP() = takes(0) returns(0) {
+    [ARRAY]                     // [ARRAY_PTR]
+    0x00 mstore                 // []
+    0x20 0x00                   // [memOffset, size]
+    sha3                        // [hash]
+
+    [ARRAY] sload               // [Array_length, hash]
+    0x01 swap1                  // [Array_length, 0x01, hash]
+    sub                         // [Array_length - 1, hash]
+
+    add                         // [Last_item + hash]
+
+    0x00                        // [0, LastStorageSlot]
+    swap1                       // [LastStorageSlot, 0]
+    sstore                      // []
+}
+
+
+#define macro PUSH() = takes(0) returns(0) {
+    [ARRAY]                     // [ARRAY_PTR]
+    0x00 mstore                 // []
+
+    0x20 0x00                   // [memOffset, size]
+    sha3                        // [hash]
+
+    [ARRAY] sload               // [length, hash]
+
+    dup1                        // [length, length, hash]
+    swap2                       // [hash, length, length]
+    add                         // [newStorageSlot, length]
+
+    0x04 calldataload           // [arg, newStorageSlot, length]
+    swap1                       // [newStorageSlot, arg, length]
+
+    sstore                      // [length]
+
+    0x01 add                    // [0x01 + length]
+    [ARRAY]                     // [newLenght, ARRAY_PTR]
+    swap1                       // [ARRAY_PTR, newLength]
+    sstore                      // []
+}
+
+
+#define macro LENGTH() = takes(0) returns(0) {
+    [ARRAY] sload               // [ARRAY_LENGTH]
+    0x00 mstore                 // []
+
+    0x20 0x00                   // [memOffset, Size]
+    return                      // []
+}
+
+
+#define macro MAIN() = takes(0) returns(0) {
+
+    0x00 calldataload 0xE0 shr
+
+    dup1 __FUNC_SIG(push) eq push jumpi
+    dup1 __FUNC_SIG(popLast) eq popLast jumpi
+    dup1 __FUNC_SIG(show) eq show jumpi
+    dup1 __FUNC_SIG(length) eq length jumpi
+
+
+    push:
+        PUSH()
+
+    popLast:
+        POP()
+    
+    show:
+        SHOW()
+
+    length:
+        LENGTH()
+
+    0x00 0x00
+    revert
+}
