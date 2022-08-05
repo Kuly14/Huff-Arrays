@@ -1,5 +1,5 @@
 #define function push() nonpayable returns()
-#define function popLast() nonpayable returns() // Can't be called pop since it would shaddow the opcode
+#define function popLast() nonpayable returns() // Can't be called pop since it would shadow the opcode
 #define function show(uint256) view returns(bytes32)
 #define function length() view returns(uint256)
 
