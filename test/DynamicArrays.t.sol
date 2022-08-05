@@ -27,10 +27,7 @@ contract SimpleStoreTest is Test {
 
         (bool success, bytes memory returnData) = address(arr).call(data);
 
-        require(success, "ITS FUCKED");
-
-        uint length = arr.length();
-        assertEq(length, 1);
+        // IN PROGRESS
     }
 }
 
